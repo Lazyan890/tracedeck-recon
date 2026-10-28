@@ -1,0 +1,82 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TraceDeck Recon</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101110;color:#e8e8e4;font:16px Arial,sans-serif}
+header{padding:22px;border-bottom:1px solid #333}
+.logo{font-size:24px;font-weight:800;letter-spacing:2px}
+.logo span{color:#aaa}
+main{max-width:850px;margin:50px auto;padding:20px}
+.tag{color:#888;font-size:12px;letter-spacing:3px}
+h1{font-size:clamp(30px,6vw,52px);margin:12px 0}
+p{color:#aaa;line-height:1.6}
+form{display:flex;gap:10px;margin-top:28px}
+input{flex:1;min-width:0;background:#181918;border:1px solid #444;color:white;padding:16px;font-size:16px}
+button{background:#eee;color:#111;border:0;padding:0 22px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+#status{margin-top:24px;color:#aaa}
+#results{margin-top:16px}
+.item{padding:15px;border:1px solid #343434;margin:8px 0;overflow-wrap:anywhere}
+footer{margin-top:45px;color:#666;font-size:12px}
+@media(max-width:500px){form{flex-direction:column}button{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="logo">TRACE<span>DECK</span> / RECON</div></header>
+<main>
+<div class="tag">PUBLIC PROFILE RECONNAISSANCE</div>
+<h1>Username search.</h1>
+<p>Search for publicly discoverable profile links by username.</p>
+<form id="form">
+<input id="username" placeholder="Enter username..." maxlength="30" required>
+<button id="submit" type="submit">SEARCH ↗</button>
+</form>
+<div id="status">Ready.</div>
+<div id="results"></div>
+<footer>Use responsibly. Search results may be incomplete or inaccurate.</footer>
+</main>
+<script>
+const form=document.getElementById('form');
+const input=document.getElementById('username');
+const button=document.getElementById('submit');
+const statusBox=document.getElementById('status');
+const results=document.getElementById('results');
+
+form.addEventListener('submit',async event=>{
+ event.preventDefault();
+ results.replaceChildren();
+ button.disabled=true;
+ statusBox.textContent='Searching...';
+ try{
+  const response=await fetch('/api/search',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({username:input.value.trim()})
+  });
+  const data=await response.json();
+  if(!response.ok) throw new Error(data.detail||'Search failed');
+  if(!data.results.length){
+   statusBox.textContent='No results returned. The search may be incomplete.';
+  }else{
+   statusBox.textContent='Search output: '+data.results.length;
+   data.results.forEach(item=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.textContent=item;
+    results.appendChild(div);
+   });
+  }
+ }catch(error){
+  statusBox.textContent='Error: '+error.message;
+ }finally{
+  button.disabled=false;
+ }
+});
+</script>
+</body>
+</html>
